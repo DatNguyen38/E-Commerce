@@ -55,7 +55,7 @@ st.set_page_config(
 def init_spark():
     spark = (
         SparkSession.builder.appName("ECommerce_Enterprise_Final")
-        .config("spark.driver.memory", "1g")
+        .config("spark.driver.memory", "512g")
         .config("spark.sql.shuffle.partitions", "10")
         .getOrCreate()
     )
