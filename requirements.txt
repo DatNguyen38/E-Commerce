@@ -5,3 +5,4 @@ plotly
 mlflow
 numpy
 protobuf<5.0.0
+setuptools
