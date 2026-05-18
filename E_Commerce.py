@@ -189,6 +189,9 @@ def train_global_models():
     mapping_df = indexed_df.select("product_idx", "product_id").distinct().cache()
 
     # 1. Collaborative Filtering (ALS)
+    import tempfile
+
+    mlflow.set_tracking_uri(f"file://{tempfile.gettempdir()}/mlruns")
     mlflow.set_experiment("ECommerce_BigData_Models")
     with mlflow.start_run(run_name="ALS_Matrix_Factorization"):
         mlflow.log_params({"maxIter": 10, "regParam": 0.15})
