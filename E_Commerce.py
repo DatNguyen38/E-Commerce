@@ -7,6 +7,7 @@ import plotly.express as px
 import streamlit as st
 import mlflow
 
+from pathlib import Path
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import (
     col,
@@ -191,7 +192,8 @@ def train_global_models():
     # 1. Collaborative Filtering (ALS)
     import tempfile
 
-    mlflow.set_tracking_uri(f"file://{tempfile.gettempdir()}/mlruns")
+    tracking_uri = Path.cwd() / "mlruns"
+    mlflow.set_tracking_uri(tracking_uri.as_uri())
     mlflow.set_experiment("ECommerce_BigData_Models")
     with mlflow.start_run(run_name="ALS_Matrix_Factorization"):
         mlflow.log_params({"maxIter": 10, "regParam": 0.15})
@@ -337,21 +339,33 @@ st.sidebar.image(
     width=120,
 )
 st.sidebar.markdown("### 🛠️ AI Control Center")
-selected_user = st.sidebar.selectbox("👤 Chọn ID Khách hàng:", user_list)
+danh_sach_da_dang = user_clusters["user_id"].unique().tolist()
+selected_user = st.sidebar.selectbox("👤 Chọn ID Khách hàng:", danh_sach_da_dang)
 
 st.title(
     "🛍️ Hệ Thống Gợi Ý & Phân Tích Big Data Trên Hệ Thống Sàn Thương Mại Điện Tử E-Commerce"
 )
 
+
 # Thẻ thông tin RFM
 user_segment = user_clusters[user_clusters["user_id"] == selected_user]
 if not user_segment.empty:
     cluster_id = user_segment.iloc[0]["prediction"]
+
+    # --- BẮT ĐẦU ĐOẠN SỬA ---
+    # Tự động phân tích xem cụm nào là VIP dựa trên trung bình tiền tiêu (Monetary)
+    cluster_stats = user_clusters.groupby("prediction")["Monetary"].mean().sort_values()
+
+    churn_id = cluster_stats.index[0]  # Cụm tiêu ít tiền nhất -> Churn
+    potential_id = cluster_stats.index[1]  # Cụm tiêu trung bình -> Tiềm năng
+    vip_id = cluster_stats.index[2]  # Cụm tiêu nhiều tiền nhất -> VIP
+
     segment_labels = {
-        0: "👑 Khách hàng VIP",
-        1: "🔥 Khách hàng Tiềm năng",
-        2: "⚠️ Nguy cơ rời bỏ (Churn)",
+        vip_id: "👑 Khách hàng VIP",
+        potential_id: "🔥 Khách hàng Tiềm năng",
+        churn_id: "⚠️ Nguy cơ rời bỏ (Churn)",
     }
+    # --- KẾT THÚC ĐOẠN SỬA ---
 
     st.info(
         f"**Phân khúc RFM (K-Means):** {segment_labels.get(cluster_id, 'N/A')} 🔹 "
@@ -359,8 +373,6 @@ if not user_segment.empty:
         f"**Frequency:** {int(user_segment.iloc[0]['Frequency'])} đơn | "
         f"**Monetary:** ${user_segment.iloc[0]['Monetary']:.2f}"
     )
-
-st.markdown("---")
 
 # --- XỬ LÝ ENGINE LOGIC SONG SONG ---
 with st.spinner("⏳ Hệ thống Big Data đang xử lý thuật toán song song..."):

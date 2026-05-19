@@ -1,0 +1,14 @@
+artifact_uri: file:///C:/Users/dat.nguyenc/Downloads/E_Commerce/mlruns/213849756267358427/98ebe1adbd5d45749667f6bb8171f5d6/artifacts
+end_time: 1779156270790
+entry_point_name: ''
+experiment_id: '213849756267358427'
+lifecycle_stage: active
+run_id: 98ebe1adbd5d45749667f6bb8171f5d6
+run_name: ALS_Matrix_Factorization
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1779156265813
+status: 3
+tags: []
+user_id: dat.nguyenc

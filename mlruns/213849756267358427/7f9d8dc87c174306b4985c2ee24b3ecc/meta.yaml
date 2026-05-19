@@ -1,0 +1,14 @@
+artifact_uri: file:///C:/Users/dat.nguyenc/Downloads/E_Commerce/mlruns/213849756267358427/7f9d8dc87c174306b4985c2ee24b3ecc/artifacts
+end_time: 1779157015602
+entry_point_name: ''
+experiment_id: '213849756267358427'
+lifecycle_stage: active
+run_id: 7f9d8dc87c174306b4985c2ee24b3ecc
+run_name: FP_Growth
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1779157014904
+status: 3
+tags: []
+user_id: dat.nguyenc
