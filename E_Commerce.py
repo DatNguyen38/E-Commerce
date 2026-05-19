@@ -195,23 +195,47 @@ def train_global_models():
     tracking_uri = Path.cwd() / "mlruns"
     mlflow.set_tracking_uri(tracking_uri.as_uri())
     mlflow.set_experiment("ECommerce_BigData_Models")
-    with mlflow.start_run(run_name="ALS_Matrix_Factorization"):
-        mlflow.log_params({"maxIter": 10, "regParam": 0.15})
-        als = ALS(
-            maxIter=10,
-            regParam=0.15,
+   from pyspark.ml.tuning import ParamGridBuilder, TrainValidationSplit
+    
+    with mlflow.start_run(run_name="ALS_Auto_Tuning"):
+        als_base = ALS(
             userCol="user_idx",
             itemCol="product_idx",
             ratingCol="rating",
             nonnegative=True,
             coldStartStrategy="drop",
         )
-        als_model = als.fit(interaction_matrix)
-
+        
+        # Thiết lập ma trận tham số để máy tự quét
+        param_grid = ParamGridBuilder() \
+            .addGrid(als_base.rank, [10, 20, 50]) \
+            .addGrid(als_base.regParam, [0.05, 0.1, 0.15]) \
+            .addGrid(als_base.maxIter, [10, 15]) \
+            .build()
+            
+        evaluator = RegressionEvaluator(metricName="rmse", labelCol="rating", predictionCol="prediction")
+        
+        # Cấu hình bộ dò tìm tự động (chia 80% train, 20% test để dò)
+        tvs = TrainValidationSplit(
+            estimator=als_base,
+            estimatorParamMaps=param_grid,
+            evaluator=evaluator,
+            trainRatio=0.8
+        )
+        
+        # Chạy tự động và lấy ra mô hình tốt nhất
         train_data, test_data = interaction_matrix.randomSplit([0.8, 0.2], seed=42)
-        rmse = RegressionEvaluator(
-            metricName="rmse", labelCol="rating", predictionCol="prediction"
-        ).evaluate(als.fit(train_data).transform(test_data))
+        tvs_model = tvs.fit(train_data)
+        als_model = tvs_model.bestModel
+        
+        # Lấy lại các tham số tốt nhất để log vào MLflow
+        best_rank = als_model._java_obj.parent().getRank()
+        best_reg = als_model._java_obj.parent().getRegParam()
+        best_iter = als_model._java_obj.parent().getMaxIter()
+        mlflow.log_params({"best_rank": best_rank, "best_regParam": best_reg, "best_maxIter": best_iter})
+        
+        # Đánh giá RMSE cuối cùng trên tập Test
+        rmse = evaluator.evaluate(als_model.transform(test_data))
         mlflow.log_metric("rmse", rmse)
 
     norms = (
