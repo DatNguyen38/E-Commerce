@@ -195,7 +195,7 @@ def train_global_models():
     tracking_uri = Path.cwd() / "mlruns"
     mlflow.set_tracking_uri(tracking_uri.as_uri())
     mlflow.set_experiment("ECommerce_BigData_Models")
-   from pyspark.ml.tuning import ParamGridBuilder, TrainValidationSplit
+    from pyspark.ml.tuning import ParamGridBuilder, TrainValidationSplit
     
     with mlflow.start_run(run_name="ALS_Auto_Tuning"):
         als_base = ALS(
